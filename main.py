@@ -9,7 +9,5 @@ pg.init()
 cr.screen = pg.display.set_mode([800,640])
 cr.event_holder = EventHolder()
 
-
-
 while not cr.event_holder.should_quit:
     cr.event_holder.get_events()
