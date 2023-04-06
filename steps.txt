@@ -1,1 +1,2 @@
 step 1: creating the base classes
+step 2: adding the assets
