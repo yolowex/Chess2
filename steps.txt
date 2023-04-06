@@ -7,3 +7,5 @@ step 5: create game class
 step 6: create sprite class
 step 7: loading the assets
 step 8: render board
+
+step 9: add tile collision
