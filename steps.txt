@@ -9,3 +9,4 @@ step 7: loading the assets
 step 8: render board
 
 step 9: add tile collision
+step 10: render pieces
