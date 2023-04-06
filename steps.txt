@@ -4,3 +4,4 @@ step 3: create event_holder class
 step 4: create common_resources class
 
 step 5: create game class
+step 6: create sprite class
