@@ -1,6 +1,6 @@
 import pygame as pg
 from core.event_holder import EventHolder
-import core.assets
+from core.assets import pieces_sprite_dict,boards_sprite_dict,boards_json_dict
 
 event_holder:EventHolder
 screen:pg.Surface
