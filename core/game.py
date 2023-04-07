@@ -166,20 +166,23 @@ class Game :
             else :
                 if uci != self.selected_piece :
                     move = self.selected_piece + uci
-                    if self.is_promotion(move) :
+                    if self.is_promotion(move) and self.is_legal(move) :
                         if self.promotion_choice is None :
                             self.promotion_panel_open = True
                             self.onhold_promotion = move
+                            self.hovered_promotion_sections = None
                             return
 
                     if self.move(move) :
                         self.selected_piece = None
+                        self.hovered_promotion_sections = None
                         self.update_pieces_map()
 
 
     def check_promotion_panel( self ) :
         if cr.event_holder.mouse_pressed_keys[2] :
             self.promotion_panel_open = False
+            self.hovered_promotion_sections = None
 
         click = cr.event_holder.mouse_pressed_keys[0]
         for rect, c in zip(self.promotion_panel_sections,
@@ -449,8 +452,7 @@ class Game :
 
     def is_promotion( self, uci ) :
         # Check if move is a pawn promotion
-        if self.pieces_map[uci[:2]] in ['p', 'P'] :
-            if uci[3 :] in ['1', '8'] :
-                return True
+        piece = self.pieces_map[uci[:2]]
+        destination = uci[3 :]
 
-        return False
+        return (piece == 'P' and destination =='8') or (piece=='p' and destination=='1')
