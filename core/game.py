@@ -41,10 +41,18 @@ class Game :
 
         self.adjust_promotion_panel()
 
+        self.bottom_panel = FRect(0,0,cr.screen.get_width(),cr.screen.get_height())
+        self.bottom_panel_speed = 3
+        self.adjust_bottom_panel()
+
         self.highlight_color = [150, 200, 150]
         self.move_color = [150, 150, 200]
         self.take_color = [200, 150, 150]
         self.check_color = [250, 20, 20]
+
+    def adjust_bottom_panel( self ):
+        self.bottom_panel.h = cr.screen.get_height() / 10
+        self.bottom_panel.y = cr.screen.get_width()
 
 
     def adjust_promotion_panel( self ) :
@@ -183,11 +191,26 @@ class Game :
                     break
 
 
+    def check_bottom_panel( self ) -> bool:
+        if cr.event_holder.mouse_pos.y > self.board_rect.y + self.board_rect.h or \
+                cr.event_holder.mouse_rect.colliderect(self.bottom_panel):
+            if self.bottom_panel.y > cr.screen.get_height() - self.bottom_panel.h:
+                self.bottom_panel.y -= self.bottom_panel_speed
+
+            return True
+
+        if self.bottom_panel.y < cr.screen.get_height():
+            self.bottom_panel.y += self.bottom_panel_speed
+
+        return False
+
     def check_events( self ) :
         if self.promotion_panel_open :
             self.check_promotion_panel()
         else :
-            self.check_pieces_moving()
+            if not self.check_bottom_panel():
+                self.check_pieces_moving()
+
 
 
     def render_pieces( self ) :
@@ -253,14 +276,20 @@ class Game :
             surface_rect.center = rect.center
             cr.screen.blit(surface, surface_rect)
 
+    def render_bottom_panel( self ):
+        pg.draw.rect(cr.screen,[130,140,160],self.bottom_panel)
 
     def render( self ) :
         cr.screen.blit(self.board_sprite.transformed_surface, [0, 0])
         self.render_checkers()
         self.render_valid_moves()
         self.render_pieces()
+
         if self.promotion_panel_open :
             self.render_promotion_panel()
+
+        self.render_bottom_panel()
+
 
 
     @property
