@@ -10,3 +10,7 @@ step 8: render board
 
 step 9: add tile collision
 step 10: render pieces
+step 11: move pieces
+step 12: highlight selected piece, and it's valid moves
+
+step 13: highlight checkers
