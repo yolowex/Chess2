@@ -1,3 +1,4 @@
+import os
 import pygame as pg
 from pygame.locals import *
 
@@ -5,14 +6,22 @@ import chess
 from typing import Optional
 from pygame.rect import FRect
 from pygame import Surface
-
+import stockfish
 from core.common_functions import *
 import core.common_resources as cr
+
 
 
 class Game :
 
     def __init__( self ) :
+
+        self.moves_sequence = []
+        if os.path.exists(cr.StockfishPath):
+            self.engine = stockfish.Stockfish(cr.StockfishPath)
+        else:
+            print(f"Engine was not found. {cr.StockfishPath} does not exist.")
+            self.engine = None
         self.board = chess.Board()
         self.board_map = {}  # A map that contains every coord and their co-responding rectangle
         self.pieces_map = {}
@@ -105,7 +114,8 @@ class Game :
 
     def update_pieces_map( self ) :
         fen = self.board.board_fen()
-
+        if self.engine is not None:
+            self.engine.set_position(self.moves_sequence)
         new_fen = [expand_fen_row(i) for i in fen.split('/')]
 
         pieces = {}
@@ -239,9 +249,13 @@ class Game :
 
 
     def check_events( self ) :
+
         if self.promotion_panel_open :
             self.check_promotion_panel()
         else :
+            if self.turn == 'black' and self.ai_is_active:
+                if self.engine is not None and self.ai_make_move():
+                    self.update_pieces_map()
             if not self.check_bottom_panel() :
                 self.check_pieces_moving()
 
@@ -333,13 +347,21 @@ class Game :
 
 
     def undo( self ):
-        try:
-            self.board.pop()
-            self.update_pieces_map()
-        except IndexError:
-            ...
+        x = 1
+        if self.ai_is_active:
+            x+=1
+
+        for i in range(x):
+            try:
+                self.board.pop()
+                if len(self.moves_sequence):
+                    self.moves_sequence.pop(-1)
+                self.update_pieces_map()
+            except IndexError:
+                ...
 
     def reset( self ):
+        self.moves_sequence.clear()
         self.board.reset()
         self.update_pieces_map()
 
@@ -392,10 +414,14 @@ class Game :
         rect.x = self.bottom_panel.w - rect.w
         return rect
 
+    def ai_make_move( self ):
+        move = self.engine.get_best_move()
+        return self.move(move)
 
     def move( self, uci ) :
         if self.is_legal(uci) :
             self.board.push_uci(uci)
+            self.moves_sequence.append(uci)
             return True
 
         return False

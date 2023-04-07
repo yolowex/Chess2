@@ -40,5 +40,8 @@ ui_dict = {
     'undo':Sprite(ui_root+"undo.png"),
 }
 
+StockfishPath = '/home/yolo/stockfish/stockfish_15.1_linux_x64_avx2/' \
+                        'stockfish-ubuntu-20.04-x86-64-avx2'
+
 
 
