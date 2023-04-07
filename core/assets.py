@@ -7,6 +7,7 @@ def contains_text(src:str,text:str):
 root = "./assets"
 pieces_root = root+"/chess_pieces/"
 boards_root = root+"/chess_boards/"
+ui_root = root+"/ui/"
 
 pieces_sprite_dict = {
     'K':Sprite(pieces_root+"white_king.png"),
@@ -32,7 +33,12 @@ boards_json_dict = {
     'classic_board':json.loads(open(boards_root+"board_empty.json").read())
 }
 
-
+ui_dict = {
+    'ai':Sprite(ui_root+"ai.png"),
+    'exit':Sprite(ui_root+"exit.png"),
+    'reset':Sprite(ui_root+"reset.png"),
+    'undo':Sprite(ui_root+"undo.png"),
+}
 
 
 

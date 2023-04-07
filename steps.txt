@@ -18,5 +18,6 @@ step 14: highlight checkers
 step 15: add promotion panel
 step 16: add bottom panel
 
-step 17: add undo,reset, and AI buttons
-step 18: add stockfish to the game
+step 17: add buttons
+step 18: add undo,reset, and AI buttons
+step 19: add stockfish to the game

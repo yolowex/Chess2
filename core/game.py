@@ -41,17 +41,19 @@ class Game :
 
         self.adjust_promotion_panel()
 
-        self.bottom_panel = FRect(0,0,cr.screen.get_width(),cr.screen.get_height())
+        self.bottom_panel = FRect(0, 0, cr.screen.get_width(), cr.screen.get_height())
         self.bottom_panel_speed = 3
         self.adjust_bottom_panel()
+        self.resize_ui_elements()
 
         self.highlight_color = [150, 200, 150]
         self.move_color = [150, 150, 200]
         self.take_color = [200, 150, 150]
         self.check_color = [250, 20, 20]
 
-    def adjust_bottom_panel( self ):
-        self.bottom_panel.h = cr.screen.get_height() / 10
+
+    def adjust_bottom_panel( self ) :
+        self.bottom_panel.h = cr.screen.get_height() * 0.05
         self.bottom_panel.y = cr.screen.get_width()
 
 
@@ -64,6 +66,12 @@ class Game :
         self.promotion_panel_sections[2].w = w
         self.promotion_panel_sections[3].x += w * 3
         self.promotion_panel_sections[3].w = w
+
+
+    def resize_ui_elements( self ) :
+        for name in cr.ui_dict :
+            sprite = cr.ui_dict[name]
+            sprite.transform_by_height(self.bottom_panel.h * 0.8)
 
 
     def resize_board( self ) :
@@ -141,7 +149,6 @@ class Game :
             if not cr.event_holder.mouse_rect.colliderect(rect) :
                 continue
 
-
             if uci in self.pieces_map :
                 piece = self.pieces_map[uci]
                 if (piece.islower() and self.turn == 'black') or (
@@ -164,7 +171,6 @@ class Game :
                             self.onhold_promotion = move
                             return
 
-
                     if self.move(move) :
                         self.selected_piece = None
                         self.update_pieces_map()
@@ -175,12 +181,13 @@ class Game :
             self.promotion_panel_open = False
 
         click = cr.event_holder.mouse_pressed_keys[0]
-        for rect,c in zip(self.promotion_panel_sections,range(len(self.promotion_panel_sections))):
-            if cr.event_holder.mouse_rect.colliderect(rect):
+        for rect, c in zip(self.promotion_panel_sections,
+                range(len(self.promotion_panel_sections))) :
+            if cr.event_holder.mouse_rect.colliderect(rect) :
                 self.hovered_promotion_sections = c
-                if click:
+                if click :
                     self.promotion_choice = self.promotion_panel_pieces[c].lower()
-                    if self.move(self.onhold_promotion+self.promotion_choice):
+                    if self.move(self.onhold_promotion + self.promotion_choice) :
                         self.selected_piece = None
                         self.selected_piece_valid_moves.clear()
                         self.update_pieces_map()
@@ -191,26 +198,42 @@ class Game :
                     break
 
 
-    def check_bottom_panel( self ) -> bool:
-        if cr.event_holder.mouse_pos.y > self.board_rect.y + self.board_rect.h or \
-                cr.event_holder.mouse_rect.colliderect(self.bottom_panel):
-            if self.bottom_panel.y > cr.screen.get_height() - self.bottom_panel.h:
+    def check_bottom_panel( self ) -> bool :
+
+        click = cr.event_holder.mouse_pressed_keys[0]
+
+        for name, rect in zip(['undo', 'reset', 'ai', 'exit'],
+                [self.ui_undo_rect, self.ui_reset_rect, self.ui_ai_rect, self.ui_exit_rect]):
+            surface = cr.ui_dict[name].transformed_surface
+            surface_rect = surface.get_rect()
+            surface_rect.center = rect.center
+
+            if cr.event_holder.mouse_rect.colliderect(surface_rect):
+                if click:
+                    if name == 'exit':
+                        cr.event_holder.should_quit = True
+                        return
+
+
+        if cr.event_holder.mouse_pos.y > self.board_rect.y + self.board_rect.h or cr.event_holder.mouse_rect.colliderect(
+            self.bottom_panel) :
+            if self.bottom_panel.y > cr.screen.get_height() - self.bottom_panel.h :
                 self.bottom_panel.y -= self.bottom_panel_speed
 
             return True
 
-        if self.bottom_panel.y < cr.screen.get_height():
+        if self.bottom_panel.y < cr.screen.get_height() :
             self.bottom_panel.y += self.bottom_panel_speed
 
         return False
+
 
     def check_events( self ) :
         if self.promotion_panel_open :
             self.check_promotion_panel()
         else :
-            if not self.check_bottom_panel():
+            if not self.check_bottom_panel() :
                 self.check_pieces_moving()
-
 
 
     def render_pieces( self ) :
@@ -267,7 +290,7 @@ class Game :
                 self.promotion_panel_sections[self.hovered_promotion_sections])
 
         for index, name in zip(range(4), self.promotion_panel_pieces) :
-            if self.turn == 'black':
+            if self.turn == 'black' :
                 name = name.lower()
 
             surface = cr.pieces_sprite_dict[name].transformed_surface
@@ -276,8 +299,16 @@ class Game :
             surface_rect.center = rect.center
             cr.screen.blit(surface, surface_rect)
 
-    def render_bottom_panel( self ):
-        pg.draw.rect(cr.screen,[130,140,160],self.bottom_panel)
+
+    def render_bottom_panel( self ) :
+        pg.draw.rect(cr.screen, [130, 140, 160], self.bottom_panel)
+
+        for name, rect in zip(['undo', 'reset', 'ai', 'exit'],
+                [self.ui_undo_rect, self.ui_reset_rect, self.ui_ai_rect, self.ui_exit_rect]):
+            surface = cr.ui_dict[name].transformed_surface
+            surface_rect = surface.get_rect()
+            surface_rect.center = rect.center
+            cr.screen.blit(surface,surface_rect)
 
     def render( self ) :
         cr.screen.blit(self.board_sprite.transformed_surface, [0, 0])
@@ -291,7 +322,6 @@ class Game :
         self.render_bottom_panel()
 
 
-
     @property
     def turn( self ) :
         result = 'black'
@@ -299,6 +329,38 @@ class Game :
             result = 'white'
 
         return result
+
+
+    @property
+    def ui_undo_rect( self ) :
+        rect = FRect(0, 0, self.bottom_panel.w * 0.2, self.bottom_panel.h)
+        rect.x, rect.y = self.bottom_panel.x, self.bottom_panel.y
+        rect.x += self.bottom_panel.w * 0
+        return rect
+
+
+    @property
+    def ui_reset_rect( self ) :
+        rect = FRect(0, 0, self.bottom_panel.w * 0.2, self.bottom_panel.h)
+        rect.y = self.bottom_panel.y
+        rect.x = self.ui_undo_rect.x + self.ui_undo_rect.w
+        return rect
+
+
+    @property
+    def ui_ai_rect( self ) :
+        rect = FRect(0, 0, self.bottom_panel.w * 0.2, self.bottom_panel.h)
+        rect.y = self.bottom_panel.y
+        rect.x = self.ui_reset_rect.x + self.ui_reset_rect.w
+        return rect
+
+
+    @property
+    def ui_exit_rect( self ) :
+        rect = FRect(0, 0, self.bottom_panel.w * 0.2, self.bottom_panel.h)
+        rect.y = self.bottom_panel.y
+        rect.x = self.bottom_panel.w - rect.w
+        return rect
 
 
     def move( self, uci ) :
