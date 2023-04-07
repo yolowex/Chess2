@@ -94,13 +94,26 @@ class Game :
 
 
     def check_pieces_moving( self ) :
+        if cr.event_holder.mouse_pressed_keys[2]:
+            self.selected_piece = None
+            self.update_pieces_map()
+
         if not cr.event_holder.mouse_pressed_keys[0] :
             return
+
+
 
         for uci in self.board_map :
             rect = self.board_map[uci]
             if not cr.event_holder.mouse_rect.colliderect(rect) :
                 continue
+
+            if uci in self.pieces_map :
+                piece = self.pieces_map[uci]
+                if (piece.islower() and self.turn == 'black') or (
+                        piece.isupper() and self.turn == 'white') :
+                    self.selected_piece = None
+
 
             if self.selected_piece is None :
                 if uci in self.pieces_map :
@@ -111,9 +124,9 @@ class Game :
                         self.fill_selected_piece_valid_moves()
             else :
                 if uci != self.selected_piece :
+
                     if self.move(self.selected_piece + uci) :
                         self.selected_piece = None
-                        self.selected_piece_valid_moves.clear()
                         self.update_pieces_map()
 
 
@@ -143,7 +156,7 @@ class Game :
             rect.w += 2
             rect.h += 2
 
-            if target in self.pieces_map :
+            if target in self.pieces_map or self.board.is_en_passant(chess.Move.from_uci(uci)):
                 pg.draw.rect(cr.screen, self.take_color, rect)
             else :
                 pg.draw.rect(cr.screen, self.move_color, rect, width=int(rect.w // 8))
