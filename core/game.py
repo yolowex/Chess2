@@ -25,11 +25,14 @@ class Game :
         self.resize_pieces()
         self.selected_piece = None
         self.selected_piece_valid_moves = []
+        self.checkers_list = []
+
         self.update_pieces_map()
 
         self.highlight_color = [150, 200, 150]
         self.move_color = [150, 150, 200]
         self.take_color = [200, 150, 150]
+        self.check_color = [250,20,20]
 
 
     def resize_board( self ) :
@@ -73,6 +76,7 @@ class Game :
                     pieces[letter + digit] = column
 
         self.pieces_map = pieces
+        self.fill_checkers_list()
 
 
     def resize_pieces( self ) :
@@ -171,11 +175,23 @@ class Game :
             width=int(rect.w // 8))
 
 
+    def render_checkers( self ):
+        for uci in self.checkers_list:
+            rect = self.board_map[uci].copy()
+            rect.x -= 1
+            rect.y -= 1
+            rect.w += 2
+            rect.h += 2
+
+            pg.draw.rect(cr.screen,self.check_color,rect)
+
 
     def render( self ) :
         cr.screen.blit(self.board_sprite.transformed_surface, [0, 0])
+        self.render_checkers()
         self.render_valid_moves()
         self.render_pieces()
+
 
 
     @property
@@ -207,3 +223,32 @@ class Game :
             move = self.selected_piece + uci
             if self.is_legal(move) :
                 self.selected_piece_valid_moves.append(move)
+
+    def fill_checkers_list( self ):
+        self.checkers_list = self.get_checkers_coordination()
+
+    def find_piece( self, name ) :
+        for uci in self.pieces_map :
+            piece = self.pieces_map[uci]
+            if piece == name :
+                return uci
+
+    def get_checkers_coordination( self ) :
+        if not self.board.is_check() :
+            return []
+
+        checkers = str(self.board.checkers()).split('\n')
+        checkers = [[c for c in i if c != ' '] for i in checkers]
+        result = []
+        for row, digit in zip(checkers, '87654321') :
+            for cell, letter in zip(row, 'abcdefgh') :
+                if cell == '1' :
+                    result.append(letter + digit)
+
+        king = 'K'
+        if self.turn == 'black':
+            king = 'k'
+
+        result.append(self.find_piece(king))
+
+        return result
