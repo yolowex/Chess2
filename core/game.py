@@ -27,12 +27,35 @@ class Game :
         self.selected_piece_valid_moves = []
         self.checkers_list = []
 
+        self.promotion_choice = None
         self.update_pieces_map()
+
+        self.promotion_panel_open = False
+        self.promotion_panel_pieces = 'QRBN'
+        self.onhold_promotion = None
+        self.hovered_promotion_sections = None
+        self.promotion_panel = FRect(0, 0, self.board_rect.w / 2, self.board_rect.h / 8)
+        self.promotion_panel.center = cr.screen.get_rect().center
+        self.promotion_panel_sections = [FRect(self.promotion_panel), FRect(self.promotion_panel),
+            FRect(self.promotion_panel), FRect(self.promotion_panel), ]
+
+        self.adjust_promotion_panel()
 
         self.highlight_color = [150, 200, 150]
         self.move_color = [150, 150, 200]
         self.take_color = [200, 150, 150]
-        self.check_color = [250,20,20]
+        self.check_color = [250, 20, 20]
+
+
+    def adjust_promotion_panel( self ) :
+        w = self.board_rect.w / 8
+        self.promotion_panel_sections[0].w = w
+        self.promotion_panel_sections[1].x += w
+        self.promotion_panel_sections[1].w = w
+        self.promotion_panel_sections[2].x += w * 2
+        self.promotion_panel_sections[2].w = w
+        self.promotion_panel_sections[3].x += w * 3
+        self.promotion_panel_sections[3].w = w
 
 
     def resize_board( self ) :
@@ -98,26 +121,24 @@ class Game :
 
 
     def check_pieces_moving( self ) :
-        if cr.event_holder.mouse_pressed_keys[2]:
+        if cr.event_holder.mouse_pressed_keys[2] :
             self.selected_piece = None
             self.update_pieces_map()
 
         if not cr.event_holder.mouse_pressed_keys[0] :
             return
 
-
-
         for uci in self.board_map :
             rect = self.board_map[uci]
             if not cr.event_holder.mouse_rect.colliderect(rect) :
                 continue
+
 
             if uci in self.pieces_map :
                 piece = self.pieces_map[uci]
                 if (piece.islower() and self.turn == 'black') or (
                         piece.isupper() and self.turn == 'white') :
                     self.selected_piece = None
-
 
             if self.selected_piece is None :
                 if uci in self.pieces_map :
@@ -128,14 +149,45 @@ class Game :
                         self.fill_selected_piece_valid_moves()
             else :
                 if uci != self.selected_piece :
+                    move = self.selected_piece + uci
+                    if self.is_promotion(move) :
+                        if self.promotion_choice is None :
+                            self.promotion_panel_open = True
+                            self.onhold_promotion = move
+                            return
 
-                    if self.move(self.selected_piece + uci) :
+
+                    if self.move(move) :
                         self.selected_piece = None
                         self.update_pieces_map()
 
 
+    def check_promotion_panel( self ) :
+        if cr.event_holder.mouse_pressed_keys[2] :
+            self.promotion_panel_open = False
+
+        click = cr.event_holder.mouse_pressed_keys[0]
+        for rect,c in zip(self.promotion_panel_sections,range(len(self.promotion_panel_sections))):
+            if cr.event_holder.mouse_rect.colliderect(rect):
+                self.hovered_promotion_sections = c
+                if click:
+                    self.promotion_choice = self.promotion_panel_pieces[c].lower()
+                    if self.move(self.onhold_promotion+self.promotion_choice):
+                        self.selected_piece = None
+                        self.selected_piece_valid_moves.clear()
+                        self.update_pieces_map()
+
+                    self.promotion_choice = None
+                    self.promotion_panel_open = False
+                    self.hovered_promotion_sections = False
+                    break
+
+
     def check_events( self ) :
-        self.check_pieces_moving()
+        if self.promotion_panel_open :
+            self.check_promotion_panel()
+        else :
+            self.check_pieces_moving()
 
 
     def render_pieces( self ) :
@@ -149,7 +201,7 @@ class Game :
 
 
     def render_valid_moves( self ) :
-        if self.selected_piece is None:
+        if self.selected_piece is None :
             return
 
         for uci in self.selected_piece_valid_moves :
@@ -160,30 +212,46 @@ class Game :
             rect.w += 2
             rect.h += 2
 
-            if target in self.pieces_map or self.board.is_en_passant(chess.Move.from_uci(uci)):
+            if target in self.pieces_map or self.board.is_en_passant(chess.Move.from_uci(uci)) :
                 pg.draw.rect(cr.screen, self.take_color, rect)
             else :
                 pg.draw.rect(cr.screen, self.move_color, rect, width=int(rect.w // 8))
-
 
         rect = self.board_map[self.selected_piece].copy()
         rect.x -= 1
         rect.y -= 1
         rect.w += 2
         rect.h += 2
-        pg.draw.rect(cr.screen, self.highlight_color, rect,
-            width=int(rect.w // 8))
+        pg.draw.rect(cr.screen, self.highlight_color, rect, width=int(rect.w // 8))
 
 
-    def render_checkers( self ):
-        for uci in self.checkers_list:
+    def render_checkers( self ) :
+        for uci in self.checkers_list :
             rect = self.board_map[uci].copy()
             rect.x -= 1
             rect.y -= 1
             rect.w += 2
             rect.h += 2
 
-            pg.draw.rect(cr.screen,self.check_color,rect)
+            pg.draw.rect(cr.screen, self.check_color, rect)
+
+
+    def render_promotion_panel( self ) :
+        pg.draw.rect(cr.screen, self.highlight_color, self.promotion_panel)
+
+        if self.hovered_promotion_sections is not None :
+            pg.draw.rect(cr.screen, self.take_color,
+                self.promotion_panel_sections[self.hovered_promotion_sections])
+
+        for index, name in zip(range(4), self.promotion_panel_pieces) :
+            if self.turn == 'black':
+                name = name.lower()
+
+            surface = cr.pieces_sprite_dict[name].transformed_surface
+            surface_rect = surface.get_rect()
+            rect = self.promotion_panel_sections[index]
+            surface_rect.center = rect.center
+            cr.screen.blit(surface, surface_rect)
 
 
     def render( self ) :
@@ -191,7 +259,8 @@ class Game :
         self.render_checkers()
         self.render_valid_moves()
         self.render_pieces()
-
+        if self.promotion_panel_open :
+            self.render_promotion_panel()
 
 
     @property
@@ -212,6 +281,9 @@ class Game :
 
 
     def is_legal( self, uci ) :
+        if self.is_promotion(uci) :
+            uci += 'q'
+
         return chess.Move.from_uci(uci) in self.board.legal_moves
 
 
@@ -224,14 +296,17 @@ class Game :
             if self.is_legal(move) :
                 self.selected_piece_valid_moves.append(move)
 
-    def fill_checkers_list( self ):
+
+    def fill_checkers_list( self ) :
         self.checkers_list = self.get_checkers_coordination()
+
 
     def find_piece( self, name ) :
         for uci in self.pieces_map :
             piece = self.pieces_map[uci]
             if piece == name :
                 return uci
+
 
     def get_checkers_coordination( self ) :
         if not self.board.is_check() :
@@ -246,9 +321,18 @@ class Game :
                     result.append(letter + digit)
 
         king = 'K'
-        if self.turn == 'black':
+        if self.turn == 'black' :
             king = 'k'
 
         result.append(self.find_piece(king))
 
         return result
+
+
+    def is_promotion( self, uci ) :
+        # Check if move is a pawn promotion
+        if self.pieces_map[uci[:2]] in ['p', 'P'] :
+            if uci[3 :] in ['1', '8'] :
+                return True
+
+        return False
