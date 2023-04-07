@@ -24,10 +24,13 @@ class Game :
 
         self.resize_pieces()
         self.selected_piece = None
+        self.selected_piece_valid_moves = []
         self.update_pieces_map()
 
-    def update( self ):
-        self.update_pieces_map()
+        self.highlight_color = [150, 200, 150]
+        self.move_color = [150, 150, 200]
+        self.take_color = [200, 150, 150]
+
 
     def resize_board( self ) :
         self.board_sprite.transform(cr.screen.get_width(), cr.screen.get_height())
@@ -90,16 +93,6 @@ class Game :
             sprite.transform_by_rel(rel[0], rel[1])
 
 
-    def render_pieces( self ) :
-        for uci in self.pieces_map :
-            piece_name = self.pieces_map[uci]
-            rect = self.board_map[uci]
-            piece_rect = cr.pieces_sprite_dict[piece_name].transformed_surface.get_rect()
-            piece_rect.center = rect.center
-
-            cr.screen.blit(cr.pieces_sprite_dict[piece_name].transformed_surface, piece_rect)
-
-
     def check_pieces_moving( self ) :
         if not cr.event_holder.mouse_pressed_keys[0] :
             return
@@ -110,27 +103,66 @@ class Game :
                 continue
 
             if self.selected_piece is None :
-                if uci in self.pieces_map:
+                if uci in self.pieces_map :
                     piece = self.pieces_map[uci]
-                    if (piece.islower() and self.turn == 'black') or \
-                            (piece.isupper() and self.turn == 'white'):
-
+                    if (piece.islower() and self.turn == 'black') or (
+                            piece.isupper() and self.turn == 'white') :
                         self.selected_piece = uci
+                        self.fill_selected_piece_valid_moves()
             else :
-                if uci != self.selected_piece:
-                    if self.move(self.selected_piece+uci):
+                if uci != self.selected_piece :
+                    if self.move(self.selected_piece + uci) :
                         self.selected_piece = None
-                        self.update()
-
+                        self.selected_piece_valid_moves.clear()
+                        self.update_pieces_map()
 
 
     def check_events( self ) :
         self.check_pieces_moving()
 
 
+    def render_pieces( self ) :
+        for uci in self.pieces_map :
+            piece_name = self.pieces_map[uci]
+            rect = self.board_map[uci]
+            piece_rect = cr.pieces_sprite_dict[piece_name].transformed_surface.get_rect()
+            piece_rect.center = rect.center
+
+            cr.screen.blit(cr.pieces_sprite_dict[piece_name].transformed_surface, piece_rect)
+
+
+    def render_valid_moves( self ) :
+        if self.selected_piece is None:
+            return
+
+        for uci in self.selected_piece_valid_moves :
+            target = uci[2 :]
+            rect = self.board_map[target].copy()
+            rect.x -= 1
+            rect.y -= 1
+            rect.w += 2
+            rect.h += 2
+
+            if target in self.pieces_map :
+                pg.draw.rect(cr.screen, self.take_color, rect)
+            else :
+                pg.draw.rect(cr.screen, self.move_color, rect, width=int(rect.w // 8))
+
+
+        rect = self.board_map[self.selected_piece].copy()
+        rect.x -= 1
+        rect.y -= 1
+        rect.w += 2
+        rect.h += 2
+        pg.draw.rect(cr.screen, self.highlight_color, rect,
+            width=int(rect.w // 8))
+
+
+
     def render( self ) :
         cr.screen.blit(self.board_sprite.transformed_surface, [0, 0])
-        self.render_pieces()  # pg.draw.rect(cr.screen,[0,0,0],self.board_rect,width=20)
+        self.render_valid_moves()
+        self.render_pieces()
 
 
     @property
@@ -141,9 +173,24 @@ class Game :
 
         return result
 
-    def move( self,uci ):
-        if chess.Move.from_uci(uci) in self.board.legal_moves:
+
+    def move( self, uci ) :
+        if self.is_legal(uci) :
             self.board.push_uci(uci)
             return True
 
         return False
+
+
+    def is_legal( self, uci ) :
+        return chess.Move.from_uci(uci) in self.board.legal_moves
+
+
+    def fill_selected_piece_valid_moves( self ) :
+        self.selected_piece_valid_moves.clear()
+        for uci in self.board_map :
+            if self.selected_piece == uci :
+                continue
+            move = self.selected_piece + uci
+            if self.is_legal(move) :
+                self.selected_piece_valid_moves.append(move)

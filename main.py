@@ -10,8 +10,6 @@ pg.init()
 cr.screen = pg.display.set_mode([720,720])
 cr.event_holder = EventHolder()
 
-print(cr.screen)
-print(cr.event_holder)
 game = Game()
 
 while not cr.event_holder.should_quit:
