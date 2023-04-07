@@ -40,6 +40,7 @@ class Game :
             FRect(self.promotion_panel), FRect(self.promotion_panel), ]
 
         self.adjust_promotion_panel()
+        self.ai_is_active = False
 
         self.bottom_panel = FRect(0, 0, cr.screen.get_width(), cr.screen.get_height())
         self.bottom_panel_speed = 3
@@ -212,7 +213,13 @@ class Game :
                 if click:
                     if name == 'exit':
                         cr.event_holder.should_quit = True
-                        return
+                        return True
+                    if name == 'undo':
+                        self.undo()
+                    if name == 'reset':
+                        self.reset()
+                    if name == 'ai':
+                        self.trigger_ai()
 
 
         if cr.event_holder.mouse_pos.y > self.board_rect.y + self.board_rect.h or cr.event_holder.mouse_rect.colliderect(
@@ -320,6 +327,26 @@ class Game :
             self.render_promotion_panel()
 
         self.render_bottom_panel()
+
+
+    def undo( self ):
+        try:
+            self.board.pop()
+            self.update_pieces_map()
+        except IndexError:
+            ...
+
+    def reset( self ):
+        self.board.reset()
+        self.update_pieces_map()
+
+    def trigger_ai( self ):
+        self.ai_is_active = not self.ai_is_active
+        text = 'activated ai'
+        if not self.ai_is_active:
+            text = 'de' + text
+
+        print(text)
 
 
     @property
