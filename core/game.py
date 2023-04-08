@@ -347,6 +347,7 @@ class Game :
 
 
     def undo( self ):
+        self.selected_piece = None
         x = 1
         if self.ai_is_active:
             x+=1
@@ -361,6 +362,7 @@ class Game :
                 ...
 
     def reset( self ):
+        self.selected_piece = None
         self.moves_sequence.clear()
         self.board.reset()
         self.update_pieces_map()
