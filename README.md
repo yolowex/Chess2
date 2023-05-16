@@ -4,6 +4,7 @@ Chess2 is a chess game developed using `pygame-ce`, a fork of `pygame`. This pro
 
 # Showcase 
 I outsmarted Stockfish 15.1 in just 20 seconds!
+
 https://github.com/mmdmoa/Chess2/assets/122750743/165f3135-dfbf-48d0-b771-4bfc802da653
 
 # Requirements
