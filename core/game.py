@@ -11,7 +11,6 @@ from core.common_functions import *
 import core.common_resources as cr
 
 
-
 class Game :
 
     def __init__( self ) :
