@@ -1,7 +1,12 @@
 import pygame as pg
 
 class Sprite:
-
+    """
+     this class is usefull when you have an original image that is 
+     continuously being transformed. it holds both the new Surface, and the 
+     original Surface.
+    """
+    
     def __init__(self,path:str):
         self.raw_surface  = pg.image.load(path)
         self.transformed_surface = self.raw_surface.copy()
