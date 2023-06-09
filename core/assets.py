@@ -1,5 +1,7 @@
+import this
 import json
 from core.sprite import Sprite
+
 
 def contains_text(src:str,text:str):
     return src.find(text) != -1
