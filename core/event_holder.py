@@ -4,6 +4,10 @@ from pygame.rect import FRect
 from pygame.math import Vector2
 
 class EventHolder :
+    """
+    This class holds the fetched events, and converts them into a 
+    more digestigble format, so it's easily processed
+    """
     def __init__( self ) :
         self.pressed_keys = []
         self.released_keys = []
